@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "EKS Browser Extension",
+    "version": "1.0",
+    "background": {
+      "service_worker": "background.js",
+      "persistent": false
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "images/icon16.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+      }
+    },
+    "permissions": [
+      "activeTab",
+      "http://localhost:8080/"
+    ]
+  }
