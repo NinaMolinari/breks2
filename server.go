@@ -2,32 +2,62 @@ package main
 
 import (
 	//"fmt"
+    "fmt"
+	"log"
+	"os"
+
 	"os/exec"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/eks"
+	"breks/pkg/eks"
+
+	// "github.com/aws/aws-sdk-go/aws"
+	// "github.com/aws/aws-sdk-go/aws/session"
+	// "github.com/aws/aws-sdk-go/service/eks"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
 var jwtKey = []byte("your_secret_key")
 
-func listClusters(c *gin.Context) {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
-	}))
+func listClusters2(c *gin.Context){
+    region 				:= "us-east-1"
+	sessionToken 		:= ""               //  optional
 
-	svc := eks.New(sess)
-	result, err := svc.ListClusters(nil)
+	// Create a new EKS client
+	eksClient, err := eks.NewEKSClient(
+                            os.Getenv("CAAS_UI_AWS_ACCESS_KEY_ID"),         // *resp.Credentials.AccessKeyId, //
+                            os.Getenv("CAAS_UI_AWS_SECRET_ACCESS_KEY"),     // *resp.Credentials.SecretAccessKey, //
+							sessionToken,		                            // *resp.Credentials.SessionToken, //
+							region)                                         // AWS region
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
+		log.Fatalf("Failed to create EKS client: %v", err)
 	}
 
-	c.JSON(200, gin.H{"clusters": result.Clusters})
+	// List EKS clusters
+	clusters, err := eksClient.ListClusters()
+	if err != nil {
+		log.Fatalf("Failed to list EKS clusters: %v", err)
+	}
+
+	fmt.Println("Clusters:", clusters)
+    c.JSON(200, gin.H{"clusters": clusters})
 }
+
+// func listClusters(c *gin.Context) {
+// 	sess := session.Must(session.NewSession(&aws.Config{
+// 		Region: aws.String("us-east-1"),
+// 	}))
+
+// 	svc := eks.New(sess)
+// 	result, err := svc.ListClusters(nil)
+// 	if err != nil {
+// 		c.JSON(500, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	c.JSON(200, gin.H{"clusters": result.Clusters})
+// }
 
 func kubectlCommand(c *gin.Context) {
 	cmd := exec.Command("kubectl", "get", "pods", "--all-namespaces")
@@ -77,11 +107,11 @@ func authenticate(c *gin.Context) {
 
 func main() {
 	r := gin.Default()
-	r.Use(authenticate)
+	// r.Use(authenticate)
 
-	r.POST("/login", login)
-	r.GET("/list-clusters", listClusters)
-	r.GET("/kubectl", kubectlCommand)
+	//r.POST("/login", login)
+	r.GET("/list-clusters", listClusters2)
+	//r.GET("/kubectl", kubectlCommand)
 
 	r.Run(":8080")
 }

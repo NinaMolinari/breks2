@@ -1,1 +1,1 @@
-console.log("Background script loaded!");
+console.log("Background script will do data analysis and issue web-alerts...");
